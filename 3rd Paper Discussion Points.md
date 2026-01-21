@@ -1,3 +1,6 @@
+# Introduction 
+- Same for all papers 
+
 # Training Data 
 - Identify Possible Sources: They used the MRI scan to create a 3D model of the cortex.
 - This model contains all possible points on the cortex where neuronal activity could originate. These are the candidate “sources” (15,002 grid points in their case).
@@ -22,3 +25,10 @@
 - Specifically, the input is a matrix of size 306 × T, where 306 corresponds to the number of MEG sensors and T represents the number of consecutive time samples. This allows the model to observe how MEG signals evolve over time, capturing temporal patterns such as oscillations, synchrony between sources, and phase relationships. 
 - To process this time-series data efficiently, the CNN applies 1D convolutional filters along the time dimension, which act as space–time feature extractors. These filters learn meaningful temporal patterns while sharing parameters across time, resulting in fewer trainable parameters compared to fully connected networks. 
 - By exploiting information from multiple snapshots, DeepMEG-CNN achieves more robust and accurate source localization, especially in noisy conditions or when multiple brain sources are active simultaneously.
+
+# Method
+- The DeepMEG models were trained using Stochastic Gradient Descent (SGD), which is a common optimization method in deep learning. 
+- In SGD, the network is repeatedly shown training examples, compares its predicted brain source location with the true location, and then slightly adjusts its internal parameters to reduce the error. 
+- The error is measured using the Mean Squared Error (MSE) loss function, which penalizes the network based on how far its predicted 3D coordinates are from the true source coordinates in the simulated data. 
+- This encourages the model to produce source estimates that are as close as possible to the ground truth.
+- To ensure robustness and generalization, the models were trained on data generated with different noise levels (varying SNRs) and different inter-source correlations, allowing the network to learn to localize brain activity accurately even when the MEG signals are noisy or when multiple brain regions are active simultaneously.
