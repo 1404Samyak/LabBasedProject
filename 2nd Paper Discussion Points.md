@@ -14,3 +14,11 @@
 - It uses 4 CNN layers to 
     - Detect patterns in how the signal changes over time 
     - Extract important time-domain features
+
+2)Spatial Block (Location Information)
+- After time features are extracted, they are passed to the Spatial Block.
+- This block consists of 6 fully connected layers, each having 500 neurons.
+- Its job is to:
+    - Use the learned time features
+    - Predict how strong the activity is at each dipole location
+- The output corresponds to the amplitude of all dipoles at the center of the time window.
