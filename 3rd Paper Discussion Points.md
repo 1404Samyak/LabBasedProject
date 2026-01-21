@@ -32,3 +32,16 @@
 - The error is measured using the Mean Squared Error (MSE) loss function, which penalizes the network based on how far its predicted 3D coordinates are from the true source coordinates in the simulated data. 
 - This encourages the model to produce source estimates that are as close as possible to the ground truth.
 - To ensure robustness and generalization, the models were trained on data generated with different noise levels (varying SNRs) and different inter-source correlations, allowing the network to learn to localize brain activity accurately even when the MEG signals are noisy or when multiple brain regions are active simultaneously.
+
+# Results
+- Baseline Comparison: The DeepMEG models were evaluated against the traditional RAP-MUSIC MEG source localization method.
+- Higher Accuracy: DeepMEG achieved better localization accuracy, especially in difficult conditions such as low SNR and highly correlated (synchronous) brain sources.
+
+- Much Faster Computation: DeepMEG was approximately 10,000× faster than RAP-MUSIC, estimating source locations in less than 0.2 ms, enabling 1 kHz real-time imaging.
+- Robustness to Head Movement: DeepMEG remained stable even when small head rotations (1°) or translations (3 mm) were introduced, whereas traditional methods showed significant performance degradation.
+
+# Limitations and Future Prospects
+- Subject Specificity: At present, each DeepMEG model must be trained separately for every individual because brain anatomy (shape and size of the cortex) varies from person to person.
+- Sensitivity to Assumptions: The model’s accuracy depends on how well the simulated training data reflects real brain activity, including assumptions about the number of active sources and the type and level of noise.
+- Future Direction – Transfer Learning: The authors propose using transfer learning, where a model trained on one subject can be quickly fine-tuned for a new subject, reducing training time and data requirements.
+- Future Direction – More Realistic Simulations: Further research is needed to generate more realistic simulated data so that the model generalizes better to real MEG experiments.
