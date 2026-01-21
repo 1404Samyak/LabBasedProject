@@ -1,5 +1,3 @@
-###### 2nd Paper Discussion Points 
-
 ## Introduction 
 - MEG is a technique used to measure brain activity. It is very good at telling when something happens in the brain (high time resolution).But the difficult part is figuring out where exactly inside the brain those signals came from.
 - To solve this difficult problem, the authors introduce a new method called Deep-MEG. 
@@ -23,14 +21,14 @@
     - Predict how strong the activity is at each dipole location
 - The output corresponds to the amplitude of all dipoles at the center of the time window.
 
-## Training Data
+# Training Data
 
 
-## Results 
+# Results 
 - The authors compared Deep-MEG with four commonly used MEG source reconstruction methods: LCMV,RV,MNE and eLORETA
 - These are standard, well-known techniques used in MEG analysis.
 
-# 1) Noise Robustness (Performance in Noisy Data)
+## 1) Noise Robustness (Performance in Noisy Data)
 - Real MEG data always contains noise.
 - Deep-MEG was tested at low signal-to-noise ratio (10 dB).
 - Results:
