@@ -8,7 +8,7 @@
 
 ## Method and Procedure
 - Deep-MEG is designed to understand when the brain signal changes and where it comes from at the same time.So it has a temporal block and spatial block in its overall architecture 
-i) Temporal Block (Time Information)
+# i) Temporal Block (Time Information)
 - MEG signals are time-varying signals.
 - The Temporal Block looks at a small time window of 21 samples, which is about 20 milliseconds.
 - It uses 4 CNN layers to 
