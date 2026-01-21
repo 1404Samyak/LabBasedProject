@@ -15,10 +15,41 @@
     - Detect patterns in how the signal changes over time 
     - Extract important time-domain features
 
-2)Spatial Block (Location Information)
+2) Spatial Block (Location Information)
 - After time features are extracted, they are passed to the Spatial Block.
 - This block consists of 6 fully connected layers, each having 500 neurons.
 - Its job is to:
     - Use the learned time features
     - Predict how strong the activity is at each dipole location
 - The output corresponds to the amplitude of all dipoles at the center of the time window.
+
+## Training Data
+
+
+## Results 
+- The authors compared Deep-MEG with four commonly used MEG source reconstruction methods: LCMV,RV,MNE and eLORETA
+- These are standard, well-known techniques used in MEG analysis.
+
+1) Noise Robustness (Performance in Noisy Data)
+- Real MEG data always contains noise.
+- Deep-MEG was tested at low signal-to-noise ratio (10 dB).
+- Results:
+    - Deep-MEG still gave accurate and stable source localization
+    - Traditional methods: Worked well at high SNR (30 dB),  but at 10 dB, their localization error increased a lot.Especially eLORETA, which degraded significantly
+- Deep-MEG works well even when the MEG signal is very noisy.
+
+2) Spatial Resolution (Multiple Sources)
+- The model was tested with multiple brain sources active at the same time.
+- Deep-MEG could clearly separate different active brain regions whereas Traditional methods often produced blurred source maps
+- This means Deep-MEG can distinguish nearby sources better.
+
+3) Operational Speed (Computation Time)
+- This is a major practical advantage.
+- Traditional methods Take about 25 seconds per sample because they must compute covariance matrices, which are computationally heavy
+- Deep-MEG: Takes only a few hundred milliseconds per sample because it uses a trained neural network
+- Deep-MEG is much faster and suitable for near real-time applications.
+
+4) Real-World Data Validation
+- Deep-MEG was tested on real MEG recordings
+- Data was taken from the OpenNEURO database
+- The model worked successfully on real data which shows it is not limited to simulations
