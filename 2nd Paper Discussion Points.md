@@ -4,7 +4,7 @@
 - Deep-MEG uses deep learning to directly learn the relationship between: MEG signals (input) and Brain source locations and strengths (output)
 - The proposed method can find out surface as well as deep brain regions as sources of MEG signals (Main advantage)
 
-## Method and Procedure
+# Method and Procedure
 - Deep-MEG is designed to understand when the brain signal changes and where it comes from at the same time.So it has a temporal block and spatial block in its overall architecture 
 1) Temporal Block (Time Information)
 - MEG signals are time-varying signals.
@@ -36,18 +36,20 @@
     - Traditional methods: Worked well at high SNR (30 dB),  but at 10 dB, their localization error increased a lot.Especially eLORETA, which degraded significantly
 - Deep-MEG works well even when the MEG signal is very noisy.
 
-# 2) Spatial Resolution (Multiple Sources)
+## 2) Spatial Resolution (Multiple Sources)
 - The model was tested with multiple brain sources active at the same time.
 - Deep-MEG could clearly separate different active brain regions whereas Traditional methods often produced blurred source maps
 - This means Deep-MEG can distinguish nearby sources better.
 
-# 3) Operational Speed (Computation Time)
+## 3) Operational Speed (Computation Time)
 - This is a major practical advantage.
 - Traditional methods Take about 25 seconds per sample because they must compute covariance matrices, which are computationally heavy
 - Deep-MEG: Takes only a few hundred milliseconds per sample because it uses a trained neural network
 - Deep-MEG is much faster and suitable for near real-time applications.
 
-# 4) Real-World Data Validation
+## 4) Real-World Data Validation
 - Deep-MEG was tested on real MEG recordings
 - Data was taken from the OpenNEURO database
 - The model worked successfully on real data which shows it is not limited to simulations
+
+# Limitations and Future Work
