@@ -30,7 +30,7 @@
 - The authors compared Deep-MEG with four commonly used MEG source reconstruction methods: LCMV,RV,MNE and eLORETA
 - These are standard, well-known techniques used in MEG analysis.
 
-1) Noise Robustness (Performance in Noisy Data)
+# 1) Noise Robustness (Performance in Noisy Data)
 - Real MEG data always contains noise.
 - Deep-MEG was tested at low signal-to-noise ratio (10 dB).
 - Results:
