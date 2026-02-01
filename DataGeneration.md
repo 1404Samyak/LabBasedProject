@@ -1,0 +1,1 @@
+1) After running the generate_tvb_data.py we got a raw_nmm folder inside which we had 10 folders from a0 to a9 each folder containing lot of .mat files 
