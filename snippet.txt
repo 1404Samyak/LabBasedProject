@@ -1,1 +1,3 @@
 process_raw_nmm('filename','spikes','leadfield_name','leadfield_75_20k.mat')
+
+test_sample_source2.mat and test_sample_source2_nmm.h5
