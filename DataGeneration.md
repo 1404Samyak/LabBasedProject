@@ -1,5 +1,15 @@
-1) After running the generate_tvb_data.py script, we obtained a raw_nmm folder, inside which we had 32 folders from a0 to a31, with each folder containing many .mat files.
+1. "a0 to a31" = The Physical Brain Coordinates
+- The "City" Layout: Your source space (the brain's cortex) is actually divided into 994 total regions. 
+- Selected Towers: For this specific simulation, you have selected 32 of those 994 regions to act as the primary locations where signals are born.  Each folder (a0, a1, etc.) corresponds to one of these 32 physical coordinates in the brain.
+- The Forward Project: These are the signals before they travel through the skull. To make the AI learn, these signals will eventually be projected onto scalp electrodes (16, 21, 32, 64, or 75 channels) using a leadfield matrix.
 
-2) The folders (a0 to a31) represent locations, where each folder corresponds to a specific radio station tower placed in a different part of the brain “city.” For example, a0 is the tower located in the North, in the Frontal Lobe, a1 is a tower just a block away from it, and a31 is a tower in a completely different neighborhood. Thus, each folder represents the physical coordinate in the brain where the signal is being generated. The .mat files represent the “daily broadcasts.” Inside folder a0, there are many .mat files such as iter0, iter1, and so on, which are different recordings taken from the same tower at different times. If there were only one recording, the AI would learn to recognize only that one specific song or signal. Instead, having multiple files introduces variety: in iter0 the tower might transmit a very sharp signal, while in iter1 the signal might be slightly shaky or blurry. By providing many files, you are giving the AI multiple examples of how “Radio Station a0” sounds under different conditions.
+2. The .mat Files = "Daily Broadcasts" (Variability)
+- Avoiding Overfitting: As you noted, if a0 always looked the same, the AI would just memorize one pattern.
+- Natural Variation: The Jansen-Rit Neural Mass Models (NMM) inside your script use nonlinear differential equations to ensure that even though the "tower" is the same, the "broadcast" (the interictal spike) varies in:
+    - Amplitude and Duration: How strong and how long the spike lasts. 
+    - Morphology: Whether the signal is sharp, shaky, or blurry. 
+    - Background Noise: Each .mat file includes different background "neural chatter" to simulate a real, unpredictable brain.
 
-3) This setup is “brain-like” because, in a real brain, a single region does not produce the exact same electrical pulse every time. Depending on factors such as heart rate, medication, or even thoughts, the interictal spike (the “glitch” in the signal) appears slightly different each time it occurs. The multiple .mat files simulate this natural unpredictability so that the DeepSIF model does not get confused by real-world variations in brain signals.
+3. Why This "Brain-Like" Setup Works
+- Robustness to Noise: By training on these thousands of variations (the paper mentions over 310,000 pairs of signals), the DeepSIF model becomes incredibly resilient. 
+- The Result: Because it has "heard" so many versions of Radio Station a0, it can accurately locate that source even when the scalp signal is very noisy (down to 0 dB SNR) or when you use very few sensors (only 16 electrodes)
