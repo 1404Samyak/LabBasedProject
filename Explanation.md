@@ -1,4 +1,4 @@
-## Training data 
+# Training data 
 - The .h5 file actually contains the EEG signals and .mat files contain information about those EEG signals 
 - We created 640 simulations of EEG recordings which corresponds to 640 rows in .mat file 
 - In one simulation 32 brain regions were active and 
@@ -15,7 +15,7 @@ the .h5 dataset.
 ##### iv) mag_change (640×1) : Represents the amplitude scaling factor applied to the simulated brain signals.
 ##### v) scale_ratio (640×1×2) : Stores the normalization parameters [min, max] used to scale the signals before they were used by the model.
 
-## Training Part 
+# Training Part 
 #### 1) Loaders.py 
 - This file converts our .mat and .h5 simulation files to training samples for the neural network 
 - When training starts pytorch first creates a dataset here : dataset = SpikeEEGBuild(data_root, fwd)
