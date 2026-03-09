@@ -24,7 +24,7 @@ the .h5 dataset.
 
 ##### i) Load the .mat file
 - self.dataset_meta = loadmat(self.file_path)
-- This loads metadata of the .mat file containing:
+- This loads metadata of the .mat file containing following variables:
   - selected_region
   - nmm_idx
   - sensor_snr
@@ -65,7 +65,6 @@ Meaning:
 Each sample therefore has shape:(500 × 76)
 
 ##### ii) Get active brain regions for this simulation
-
 raw_lb = self.dataset_meta['selected_region'][index]
 - This tells which brain regions were active in this simulation
 
@@ -92,7 +91,6 @@ Meaning:
 Initially all regions have **zero activity**
 
 ##### v) Loop through each source patch
-
 for kk in range(raw_lb.shape[0]):
 - Each simulation can contain multiple active source patches
 - The loader processes them one by one
@@ -107,14 +105,12 @@ current_nmm_data = self.data[self.dataset_meta['nmm_idx'][index][kk]]
 - nmm_idx tells which signal to fetch from the H5 dataset
 
 Example: nmm_idx = 25
-
 So the loader fetches: self.data[25] of Shape: (500 × 76)
 
 ##### viii) Extract spike waveform
 ssig = current_nmm_data[:, [0]]
 
 - The first column is used as the reference spike waveform
-
 Shape becomes:(500 × 1)
 
 ##### ix) Normalize signal
@@ -131,7 +127,7 @@ Example scale ratios: 0.8, 1.0, 1.2
 
 ##### xi) Apply spatial decay
 weight_decay = mag_change
-Example:[1.0, 0.7, 0.4, 0.2]
+Example : [1.0, 0.7, 0.4, 0.2]
 
 Meaning:
 - Center brain region → strongest signal
@@ -145,7 +141,7 @@ raw_nmm[:, curr_lb] += ssig * weight_decay
 Now raw_nmm represents: Brain activity across **994 regions over time**
 
 ##### xiii) Generate EEG signals using forward model
-eeg = self.fwd @ raw_nmm.T
+eeg = self.fwd @ raw_nmm.T (raw_nmm matrix after being transposed)
 
 Matrix multiplication: (Channels × Sources) × (Sources × Time)
 Example: (76 × 994) × (994 × 500) which gives Result: (76 × 500)
@@ -194,13 +190,6 @@ Meaning:
 return sample
 The neural network receives: Input → EEG signal Target → brain source activity
 
-### 3) __len__()
-
-def __len__(self): return self.dataset_len
-
-- This tells PyTorch how many samples exist in the dataset
-- In this dataset: 640 samples
-
 ### 4) Other classes in loaders.py
 #### SpikeEEGLoad
 - Used when data is already saved as individual .mat samples
@@ -210,3 +199,188 @@ def __len__(self): return self.dataset_len
 - Supports additional features like:
   - realistic noise
   - frequency filtering
+
+#### Network.py
+This file defines the neural network architecture used to learn the mapping between EEG signals (from sensors) and brain source activity (in brain regions).
+
+The network is divided into two main stages:
+1. Spatial Filtering → learns relationships between EEG sensors(76 eeg sensors)
+2. Temporal Filtering → learns patterns over time
+
+The main model that combines both parts is called TemporalInverseNet.
+
+1) MLPSpatialFilter (Spatial Processing)
+"class MLPSpatialFilter(nn.Module)"
+
+This class performs spatial filtering of EEG signals across sensors(76 sensors) using fully connected layers (MLP).
+EEG signals come from multiple sensors, and this module learns how sensors interact with each other.Basically tries to learn how eeg signals coming from different sensors interact with each other 
+
+Example flow:
+EEG Sensors
+↓
+Learn sensor relationships
+↓
+Create spatial features
+
+i) Initialization
+def __init__(self, num_sensor, num_hidden, activation): This function runs once when the model is created.
+
+Parameters:
+- num_sensor → number of EEG sensors (example: 76)
+- num_hidden → hidden feature size (example: 500)
+- activation → activation function (ReLU, Tanh etc.)
+
+Layers created inside the model:
+fc11 : Linear(num_sensor → num_sensor)
+fc12 : Linear(num_sensor → num_sensor)
+
+fc21 : Linear(num_sensor → num_hidden)
+fc22 : Linear(num_hidden → num_hidden)
+
+fc23 : Linear(num_sensor → num_hidden)
+
+value : Linear(num_hidden → num_hidden)
+
+Purpose of these layers:
+EEG sensors
+↓
+Transform sensor signals
+↓
+Extract spatial features
+
+Activation function is created dynamically: self.activation = nn.__dict__[activation]()
+
+Meaning the model can use activation functions like: ReLU,Tanh or Sigmoid
+
+ii) Forward Pass
+def forward(self, x): This defines how EEG data flows through the spatial network.
+
+Step 1: First transformation with residual connection
+x = activation(fc12(activation(fc11(x))) + x)
+
+Flow:
+Input EEG
+↓
+fc11
+↓
+activation
+↓
+fc12
+↓
+add original input
+↓
+activation
+
+The + x part is called a residual connection, which helps:
+- better training
+- stable gradients
+
+Step 2: Hidden feature transformation
+x = activation(fc22(activation(fc21(x))) + fc23(x))
+
+Flow:
+Sensor features
+↓
+Transform into hidden representation
+
+Step 3: Final spatial output
+out['value'] = value(x)
+out['value_activation'] = activation(out['value'])
+
+Two outputs are stored:
+value
+value_activation
+
+Usually the network uses value_activation.
+
+
+2) TemporalFilter (Temporal Processing)
+"class TemporalFilter(nn.Module)" : This module learns temporal patterns in EEG signals using LSTM (Recurrent Neural Network).
+
+EEG signals are time series, so temporal modeling is important.
+
+Example flow:
+EEG signals across time
+↓
+LSTM
+↓
+Temporal brain activity patterns
+
+
+i) Initialization
+def __init__(self, input_size, num_source, num_layer, activation):
+
+Parameters:
+- input_size → spatial feature size (example: 500)
+- num_source → number of brain regions (example: 994)
+- num_layer → number of LSTM layers
+- activation → activation function
+
+LSTM creation:
+
+self.rnns.append(
+    nn.LSTM(input_size, num_source,
+            batch_first=True,
+            num_layers=num_layer)
+)
+
+Meaning:
+
+Input : spatial features
+Output : predicted brain source signals
+
+
+ii) Forward Pass
+def forward(self, x):
+
+Step 1: Pass input through LSTM
+x, _ = l(x)
+
+The LSTM processes the temporal sequence.
+
+Output is stored as:
+
+out['rnn'] = x
+
+Conceptual output shape:
+
+Batch × Time × BrainSources
+
+Example:
+
+Batch
+↓
+500 time points
+↓
+994 brain regions
+
+---
+
+3) TemporalInverseNet (Main Network)
+
+"class TemporalInverseNet(nn.Module)"
+This is the main model that combines spatial and temporal modules.
+
+It solves the EEG inverse problem:
+EEG signals → Brain source activity
+
+i) Initialization
+
+def __init__(...)
+
+Important parameters:
+- num_sensor → number of EEG sensors
+- num_source → number of brain regions
+- rnn_layer → number of LSTM layers
+- temporal_input_size → hidden feature size
+
+Two modules are created:
+Spatial Module
+↓
+MLPSpatialFilter
+
+Temporal Module
+↓
+TemporalFilter
+
+Code:self.spatial = spat
