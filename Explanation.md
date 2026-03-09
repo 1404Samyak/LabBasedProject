@@ -14,3 +14,5 @@ the .h5 dataset.
 ##### ii) sensor_snr (640×1) : Stores the signal-to-noise ratio used when adding noise to the EEG signals for each simulation.
 ##### iv) mag_change (640×1) : Represents the amplitude scaling factor applied to the simulated brain signals.
 ##### v) scale_ratio (640×1×2) : Stores the normalization parameters [min, max] used to scale the signals before they were used by the model.
+
+## Training Part 
