@@ -6,3 +6,4 @@
 
 - The shape of .h5 file is 500,76 means 500 timepoints and 76 active regions 
 
+## Role of .mat file 
