@@ -222,7 +222,8 @@ value layer
      out['value_activation']
            (B , 500)
 
-           
+Final representation produced by the network: (B , 500) where B is some batch size 
+
 ### 2) TemporalFilter (Temporal Processing)
 `class TemporalFilter(nn.Module)`
 This module learns temporal patterns in EEG signals using LSTM (Recurrent Neural Network).
