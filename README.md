@@ -159,7 +159,7 @@ This stabilizes the signal for neural network training.
 # Network.py
 This file defines the neural network architecture used to learn the mapping between EEG signals (from sensors) and brain source activity (in brain regions). The network is divided into two main stages:
 1. Spatial Filtering → learns relationships between EEG sensors (76 eeg sensors)
-2. Temporal Filtering → learns patterns over time
+2. Temporal Filtering → learns patterns over time ,because EEG signals are time series data how they change over time ,temporal filter learns that 
 
 The main model that combines both parts is called **TemporalInverseNet** (spatial filtering + temporal filtering).
 
