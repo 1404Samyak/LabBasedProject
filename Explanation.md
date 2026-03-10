@@ -249,7 +249,6 @@ Transform sensor signals
 Extract spatial features
 
 Activation function is created dynamically: self.activation = nn.__dict__[activation]()
-
 Meaning the model can use activation functions like: ReLU,Tanh or Sigmoid
 
 ii) Forward Pass
@@ -293,11 +292,9 @@ value_activation
 
 Usually the network uses value_activation.
 
-
 2) TemporalFilter (Temporal Processing)
 "class TemporalFilter(nn.Module)" : This module learns temporal patterns in EEG signals using LSTM (Recurrent Neural Network).
-
-EEG signals are time series, so temporal modeling is important.
+EEG signals are time series, so temporal modeling is important ,this learns the patterns in EEG signals across time
 
 Example flow:
 EEG signals across time
@@ -317,7 +314,6 @@ Parameters:
 - activation → activation function
 
 LSTM creation:
-
 self.rnns.append(
     nn.LSTM(input_size, num_source,
             batch_first=True,
@@ -325,10 +321,8 @@ self.rnns.append(
 )
 
 Meaning:
-
 Input : spatial features
 Output : predicted brain source signals
-
 
 ii) Forward Pass
 def forward(self, x):
@@ -338,26 +332,18 @@ x, _ = l(x)
 
 The LSTM processes the temporal sequence.
 
-Output is stored as:
+Output is stored as: out['rnn'] = x
 
-out['rnn'] = x
-
-Conceptual output shape:
-
-Batch × Time × BrainSources
+Conceptual output shape : Batch × Time × BrainSources
 
 Example:
-
 Batch
 ↓
 500 time points
 ↓
 994 brain regions
 
----
-
 3) TemporalInverseNet (Main Network)
-
 "class TemporalInverseNet(nn.Module)"
 This is the main model that combines spatial and temporal modules.
 
