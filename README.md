@@ -174,53 +174,59 @@ This class performs spatial filtering of EEG signals across sensors (76 sensors)
 - **Step 1**: First transformation with residual connection: `x = activation(fc12(activation(fc11(x))) + x)`. The `+ x` part is called a residual connection, which helps: better training, stable gradients.
 - **Step 2**: Hidden feature transformation: `x = activation(fc22(activation(fc21(x))) + fc23(x))`.
 - **Step 3**: Final spatial output: `out['value'] = value(x)`, `out['value_activation'] = activation(out['value'])`.
-Input EEG
-(B , 76)
-   │
-   ▼
-fc11  (76 → 76)
-   │
-activation
-   │
-   ▼
-fc12  (76 → 76)
-   │
- + residual (original x)
-   │
-activation
-   │
-   ▼
-Spatial Features
-(B , 76)
-   │
-   ▼
-fc21  (76 → 500)
-   │
-activation
-   │
-   ▼
-fc22  (500 → 500)
-   │
- + fc23(x)  (76 → 500)
-   │
-activation
-   │
-   ▼
-Hidden Representation
-(B , 500)
-   │
-   ▼
-value layer
-(500 → 500)
-   │
-   ├── out['value']
-   │       (B , 500)
-   │
-   └── activation
-           │
-           ▼
-     out['value_activation']
-           (B , 500)
+
+graph TD
+    %% Node Definitions
+    Inp(["Input EEG (B, 76)"])
+    
+    subgraph "Residual Block 1 (Dimension Preservation)"
+    fc11["fc11 (76 → 76)"]
+    act1["Activation"]
+    fc12["fc12 (76 → 76)"]
+    res1(("⊕ Residual Connection"))
+    act2["Activation"]
+    end
+
+    SF(["Spatial Features (B, 76)"])
+
+    subgraph "Residual Block 2 (Dimension Expansion)"
+    fc21["fc21 (76 → 500)"]
+    act3["Activation"]
+    fc22["fc22 (500 → 500)"]
+    res2(("⊕ fc23 Projection (76 → 500)"))
+    act4["Activation"]
+    end
+
+    HR(["Hidden Representation (B, 500)"])
+
+    subgraph "Output Layer"
+    val["Value Layer (500 → 500)"]
+    out1["out['value'] (B, 500)"]
+    act5["Activation"]
+    out2["out['value_activation'] (B, 500)"]
+    end
+
+    %% Connections
+    Inp --> fc11
+    Inp -.->|"Identity"| res1
+    fc11 --> act1 --> fc12 --> res1 --> act2
+    
+    act2 --> SF
+    SF --> fc21
+    SF -.->|"Linear Projection"| res2
+    fc21 --> act3 --> fc22 --> res2 --> act4
+    
+    act4 --> HR
+    HR --> val
+    val --> out1
+    val --> act5 --> out2
+
+    %% Styling
+    style Inp fill:#f9f,stroke:#333,stroke-width:2px
+    style SF fill:#bbf,stroke:#333,stroke-width:2px
+    style HR fill:#bfb,stroke:#333,stroke-width:2px
+    style out1 fill:#f96,stroke:#333,stroke-width:2px
+    style out2 fill:#f96,stroke:#333,stroke-width:2px
 
 Final representation produced by the network: (B , 500) where B is some batch size 
 
