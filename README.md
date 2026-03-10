@@ -242,6 +242,8 @@ Evaluates neural network predictions using Otsu thresholding to separate active 
 - **out**: Predicted brain activity (batch_size × time × brain_regions).
 - **labels**: Ground truth source regions.
 - **args_params**: Extra parameters like `dis_matrix` (994 × 994).
+- In DeepSIF training, the ground truth is the true brain source activity that generated the EEG signals.
+- batch['nmm'] This comes from Neural Mass Model simulation before we simulate EEG signals 
 
 ##### Processing Steps:
 - **Step 1: Normalize**: Scales activity values between 0 and 1.
@@ -259,8 +261,6 @@ Evaluates neural network predictions using Otsu thresholding to separate active 
 # main.py
 
 This script serves as the primary execution engine. It configures hyperparameters, initializes the data pipeline, builds the neural network, and manages the training/validation loops.
-
-
 
 ### 1) Argument Parsing and Setup
 `parser = argparse.ArgumentParser(description='DeepSIF Model')`
