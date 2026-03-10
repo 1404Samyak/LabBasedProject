@@ -370,7 +370,7 @@ TemporalFilter
 
 Code:self.spatial = spat
 
-#### utils.py
+### utils.py
 - This file contains utility/helper functions used during training, evaluation, and signal processing in the EEG source localization pipeline.
 These functions are not neural network layers. Instead, they help with:
 
@@ -381,7 +381,7 @@ These functions are not neural network layers. Instead, they help with:
 
 These utilities support both data preprocessing and evaluation of neural network outputs.
 
-### 1) ispadding (Detect Padding Values)
+#### 1) ispadding (Detect Padding Values)
 "def ispadding(x)"
 This function identifies padding values in arrays that store brain region indices.
 In many datasets, arrays are stored with a fixed size, even if the actual number of elements is smaller.
@@ -413,7 +413,7 @@ Example usage:
 lb = raw_lb[~ispadding(raw_lb)]
 This keeps only real region indices.
 
-### 2) get_otsu_regions (Identify Predicted Source Regions)
+#### 2) get_otsu_regions (Identify Predicted Source Regions)
 "def get_otsu_regions(out, labels, args_params=None)"
 This function evaluates the neural network predictions and identifies which brain regions are predicted to be active.
 
@@ -449,13 +449,13 @@ dis_matrix : Distance matrix between brain regions.
 Shape: 994 × 994
 
 Processing Steps
-##### Step 1: Normalize predicted activity
+###### Step 1: Normalize predicted activity
 thre_source = np.abs(out[i])
 thre_source = (thre_source - np.min(thre_source)) / np.max(thre_source)
 
 This scales activity values between 0 and 1.
 
-#### Step 2: Compute Otsu threshold
+##### Step 2: Compute Otsu threshold
 thresh = threshold_otsu(thre_source, nbins=100)
 Otsu's method automatically finds a threshold separating low activity and high activity regions.
 
@@ -463,7 +463,7 @@ Otsu's method automatically finds a threshold separating low activity and high a
 select_pixel = out[i] > thresh
 This creates a binary mask of active regions.
 
-#### Step 4: Identify active regions
+##### Step 4: Identify active regions
 otsu_region = np.where(np.sum(select_pixel, axis=0) > 7)[0]
 Meaning: A region is considered active only if it stays active for more than 7 time points.
 
@@ -478,14 +478,14 @@ Predicted activity signals for those regions.
 Evaluation Metrics (if args_params provided)
 If a distance matrix is provided, the function calculates three evaluation metrics.
 
-#### i) Precision 
+##### i) Precision 
 precision = overlap_regions / predicted_regions
 Meaning: Out of all predicted regions, how many were correct.
 
-#### ii) Recall 
+##### ii) Recall 
 recall = overlap_regions / true_regions
 Meaning: Out of all real active regions, how many were correctly detected.
 
-#### iii) Localization Error (LE)
+##### iii) Localization Error (LE)
 le_each_region = minimum distance between predicted and true regions
 Then the average distance is computed.
