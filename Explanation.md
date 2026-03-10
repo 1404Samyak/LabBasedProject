@@ -207,8 +207,7 @@ The network is divided into two main stages:
 1. Spatial Filtering → learns relationships between EEG sensors(76 eeg sensors)
 2. Temporal Filtering → learns patterns over time
 
-The main model that combines both parts is called TemporalInverseNet.
-
+The main model that combines both parts is called TemporalInverseNet.(spatial filtering+temporal filtering)
 1) MLPSpatialFilter (Spatial Processing)
 "class MLPSpatialFilter(nn.Module)"
 
@@ -370,3 +369,123 @@ Temporal Module
 TemporalFilter
 
 Code:self.spatial = spat
+
+#### utils.py
+- This file contains utility/helper functions used during training, evaluation, and signal processing in the EEG source localization pipeline.
+These functions are not neural network layers. Instead, they help with:
+
+- Handling padding values in labels
+- Identifying predicted brain regions
+- Adding noise to simulated EEG signals
+- Mapping region-level predictions to vertex-level brain activity
+
+These utilities support both data preprocessing and evaluation of neural network outputs.
+
+### 1) ispadding (Detect Padding Values)
+"def ispadding(x)"
+This function identifies padding values in arrays that store brain region indices.
+In many datasets, arrays are stored with a fixed size, even if the actual number of elements is smaller.
+To fill the unused positions, a special padding number is used.
+
+In this code the padding value is: 15213
+So whenever the value 15213 appears, it means:
+- This is not a real brain region
+- This is just a placeholder
+
+How it works
+Step 1: Convert the input to integer
+x = x.astype(np.int32, copy=False)
+This ensures the values are treated as integers.
+
+Step 2: Compare values with the padding number
+return np.abs(x - 15213) < 1e-6
+If a value is very close to 15213, it is marked as padding.
+
+
+Example if the Input label array: [120, 145, 200, 15213, 15213] then the Output mask: [False, False, False, True, True]
+Meaning:
+- First three values → real brain regions
+- Last two values → padding values
+
+Purpose : This function helps remove padding values when extracting actual active brain regions.
+
+Example usage:
+lb = raw_lb[~ispadding(raw_lb)]
+This keeps only real region indices.
+
+### 2) get_otsu_regions (Identify Predicted Source Regions)
+"def get_otsu_regions(out, labels, args_params=None)"
+This function evaluates the neural network predictions and identifies which brain regions are predicted to be active.
+
+The neural network outputs continuous activity values for all brain regions.
+But for evaluation we need discrete active regions.
+
+This function uses Otsu thresholding to separate active vs inactive regions.
+
+Inputs
+out
+Predicted brain activity from the neural network.
+
+Shape: (batch_size × time × brain_regions)
+
+Example: (32 × 500 × 994)
+
+Meaning:
+- 32 samples in batch
+- 500 time points
+- 994 brain regions
+
+labels
+Ground truth source regions used during simulation.
+
+Shape: (batch_size × num_sources × max_size)
+
+These contain the true active brain regions.
+
+args_params (optional) ,Extra parameters used to compute evaluation metrics.
+
+Example:
+dis_matrix : Distance matrix between brain regions.
+Shape: 994 × 994
+
+Processing Steps
+##### Step 1: Normalize predicted activity
+thre_source = np.abs(out[i])
+thre_source = (thre_source - np.min(thre_source)) / np.max(thre_source)
+
+This scales activity values between 0 and 1.
+
+#### Step 2: Compute Otsu threshold
+thresh = threshold_otsu(thre_source, nbins=100)
+Otsu's method automatically finds a threshold separating low activity and high activity regions.
+
+#### Step 3: Select regions above threshold
+select_pixel = out[i] > thresh
+This creates a binary mask of active regions.
+
+#### Step 4: Identify active regions
+otsu_region = np.where(np.sum(select_pixel, axis=0) > 7)[0]
+Meaning: A region is considered active only if it stays active for more than 7 time points.
+
+This avoids detecting random noise spikes.
+
+Output stored
+return_eval['all_regions'][i]
+Predicted active brain regions.
+return_eval['all_out'][i]
+Predicted activity signals for those regions.
+
+Evaluation Metrics (if args_params provided)
+If a distance matrix is provided, the function calculates three evaluation metrics.
+
+#### i) Precision 
+precision = overlap_regions / predicted_regions
+Meaning: Out of all predicted regions, how many were correct.
+
+#### ii) Recall 
+recall = overlap_regions / true_regions
+Meaning: Out of all real active regions, how many were correctly detected.
+
+#### iii) Localization Error (LE)
+le_each_region = minimum distance between predicted and true regions
+Then the average distance is computed.
