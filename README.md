@@ -159,14 +159,16 @@ This file defines the neural network architecture used to learn the mapping betw
 2. Temporal Filtering → learns patterns over time,like EEG signals are time based signals 
 
 The main model that combines both parts is called **TemporalInverseNet** (spatial filtering + temporal filtering both combined).
+
 ### 1) MLPSpatialFilter (Spatial Processing)
 `class MLPSpatialFilter(nn.Module)`
-This class performs spatial filtering of EEG signals across sensors (76 sensors) using fully connected layers (MLP). It learns how sensors interact with each other.
+This class performs spatial filtering of EEG signals across sensors (76 sensors) using fully connected layers (MLP). It learns how sensors interact with each other.It learns how EEG signals across 76 sensors are related to each other.
 
 ##### i) Initialization
 `def __init__(self, num_sensor, num_hidden, activation):` Runs once when the model is created.
 - **Parameters**: num_sensor (76), num_hidden (500), activation function (ReLU, Tanh etc.)
 - **Layers**: fc11, fc12 (Linear num_sensor → num_sensor); fc21, fc22 (Linear num_sensor → num_hidden); fc23 (Linear num_sensor → num_hidden); value (Linear num_hidden → num_hidden).
+- Means fc11+fc12 are two layers of one residual block and similarly  fc21+fc22+fc23 under one residual block 
 - **Activation**: Created dynamically using `nn.__dict__[activation]()`.
 
 ##### ii) Forward Pass
@@ -175,94 +177,52 @@ This class performs spatial filtering of EEG signals across sensors (76 sensors)
 - **Step 2**: Hidden feature transformation: `x = activation(fc22(activation(fc21(x))) + fc23(x))`.
 - **Step 3**: Final spatial output: `out['value'] = value(x)`, `out['value_activation'] = activation(out['value'])`.
 
-┌───────────────────────────┐
-       │     Input EEG (B, 76)     │
-       └─────────────┬─────────────┘
-                     │
-       ┌─────────────▼─────────────┐
-       │      fc11 (76 → 76)       │
-       └─────────────┬─────────────┘
-                     │
-       ┌─────────────▼─────────────┐
-       │        Activation         │
-       └─────────────┬─────────────┘
-                     │
-       ┌─────────────▼─────────────┐
-       │      fc12 (76 → 76)       │
-       └─────────────┬─────────────┘
-                     │          Linear Shortcut
-       ┌─────────────▼─────────────┐ (Residual)
-       │   ⊕ Residual Sum (x) <────┼─────────┐
-       └─────────────┬─────────────┘         │
-                     │                       │
-       ┌─────────────▼─────────────┐         │
-       │        Activation         │         │
-       └─────────────┬─────────────┘         │
-                     │                       │
-       ┌─────────────▼─────────────┐         │
-       │  Spatial Features (B, 76) ├─────────┘
-       └─────────────┬─────────────┘
-                     │
-       ┌─────────────▼─────────────┐
-       │      fc21 (76 → 500)      │
-       └─────────────┬─────────────┘
-                     │
-       ┌─────────────▼─────────────┐
-       │        Activation         │
-       └─────────────┬─────────────┘
-                     │
-       ┌─────────────▼─────────────┐
-       │     fc22 (500 → 500)      │
-       └─────────────┬─────────────┘
-                     │          Projection Shortcut
-       ┌─────────────▼─────────────┐   (fc23)
-       │  ⊕ Residual Sum (fc23) <──┼─────────┐
-       └─────────────┬─────────────┘         │
-                     │                       │
-       ┌─────────────▼─────────────┐         │
-       │        Activation         │         │
-       └─────────────┬─────────────┘         │
-                     │                       │
-       ┌─────────────▼─────────────┐         │
-       │ Hidden Representation (B, 500) ─────┘
-       └─────────────┬─────────────┘
-                     │
-       ┌─────────────▼─────────────┐
-       │ Value Layer (500 → 500)   │
-       └─────────────┬─────────────┘
-                     │
-       ┌─────────────┴─────────────────────┐
-       │                                   │
-┌──────▼───────┐                    ┌──────▼────────┐
-│ out['value'] │                    │   Activation  │
-│   (B, 500)   │                    └──────┬────────┘
-└──────────────┘                           │
-                                    ┌──────▼────────┐
-                                    │out['value_act']│
-                                    │   (B, 500)    │
-                                    └───────────────┘
+#### Following is the step-by-step flow:
+##### 1. Initial Signal Refinement (Block 1)
+- The process starts with the Input EEG data (B,76). This represents the electrical activity from 76 sensors.
+- Local Processing: The data passes through fc11, an activation function, and then fc12. This stage focuses on learning local dependencies between the sensors.
+- Linear Shortcut: While the data is being processed, a "Linear Shortcut" carries the original input forward and adds it to the output of fc12. This is the Residual Sum. It ensures that the network always has access to the raw sensor data, preventing the "vanishing gradient" problem.
+- Output: After another activation, we get Spatial Features, still in the (B,76) dimension.
 
-Final representation produced by the network: (B , 500) where B is some batch size 
+##### 2. Dimension Expansion (Block 2)
+- Now that the spatial features are refined, the network needs to project them into a much higher-dimensional space to extract complex hidden patterns.
+- Expansion: The features pass through fc21 and fc22, which expand the dimension from 76 to 500.
+- Projection Shortcut: Because the dimension has changed, we can't simply add the original (B,76) input. Instead, we use fc23 as a "Projection Shortcut" to transform the 76-dimension features into 500-dimension features, which are then summed.
+- Output: This results in the Hidden Representation (B,500).
+
+##### 3. Final Output Generation
+- The final stage prepares the data for the temporal (LSTM) part of the network.
+- Value Layer: A final linear transformation (500→500) is applied.
+- Dual-Path Output: One path goes directly to out['value']. This is a linear representation of the spatial data.
+- The second path passes through a final Activation to become out['value_act'].
+- By providing both a linear and a non-linear version of the spatial features, the network gives the subsequent LSTM layer a much richer set of information to work with for the final source localization.
+- So we get two outputs one is raw features of shape B,500 and another is activated or non linear features of same shape B,500
+but we feed only the activated/non linear features to the LSTM layer or the temporal filter 
+
+
 
 ### 2) TemporalFilter (Temporal Processing)
 `class TemporalFilter(nn.Module)`
-This module learns temporal patterns in EEG signals using LSTM (Recurrent Neural Network).
+- So for the LSTM across each time step it receives B,500 so for 500 time points if we stack all we get a seq of shape B,500,500 which is fed as input to the LSTM layers
+- The batch size is decided by the loaders.py not predefined 
+This module learns temporal patterns in EEG signals using LSTM (Recurrent Neural Network) as EEG signals are time series data so we also need to learn how they vary over time
+- For this reason the model uses an LSTM (Long Short-Term Memory network).LSTMs are designed to model sequences, remembering past information while processing future time steps.
 
 ##### i) Initialization
 `def __init__(self, input_size, num_source, num_layer, activation):`
-- **Parameters**: input_size (500), num_source (994), num_layer, activation.
+- **Parameters**: input_size (500), num_source (994) which is number of brain sources to estimate, num_layer basically number of stacked LSTM layers, activation.
 - **LSTM creation**: `self.rnns.append(nn.LSTM(input_size, num_source, batch_first=True, num_layers=num_layer))`. Input: spatial features, Output: predicted brain source signals.
 
 ##### ii) Forward Pass
 `def forward(self, x):`
 - **Step 1**: Pass input through LSTM: `x, _ = l(x)`. The LSTM processes the temporal sequence.
 - **Output**: `out['rnn'] = x`. Conceptual output shape: Batch × Time × BrainSources (Example: Batch × 500 time points × 994 brain regions).
+- So the input sequence the LSTM gets is of shape B,500,76 only and there is only one LSTM layer so output after passing through LSTM layer is B,500,994 
 
 ### 3) TemporalInverseNet (Main Network)
 `class TemporalInverseNet(nn.Module)`
 Main model that combines spatial and temporal modules. Solves the EEG inverse problem: **EEG signals → Brain source activity**.
 - **Initialization**: Creates Spatial Module (`MLPSpatialFilter`) and Temporal Module (`TemporalFilter`). `self.spatial = spat`.
-
 
 # utils.py
 Contains utility/helper functions for training, evaluation, and signal processing. Helps with padding, identifying predicted regions, adding noise, and mapping predictions.
