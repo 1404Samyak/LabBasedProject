@@ -1,5 +1,4 @@
 # Training data 
-
 - The .h5 file actually contains the EEG signals and .mat files contain information about those EEG signals 
 - We created 640 simulations of EEG recordings which corresponds to 640 rows in .mat file 
 - In one simulation 32 brain regions were active and 
@@ -22,8 +21,6 @@ Represents the amplitude scaling factor applied to the simulated brain signals.
 
 ##### v) scale_ratio (640×1×2) : 
 Stores the normalization parameters [min, max] used to scale the signals before they were used by the model.
-
----
 
 # Training Part 
 
@@ -198,7 +195,6 @@ This module learns temporal patterns in EEG signals using LSTM (Recurrent Neural
 Main model that combines spatial and temporal modules. Solves the EEG inverse problem: **EEG signals → Brain source activity**.
 - **Initialization**: Creates Spatial Module (`MLPSpatialFilter`) and Temporal Module (`TemporalFilter`). `self.spatial = spat`.
 
----
 
 # utils.py
 Contains utility/helper functions for training, evaluation, and signal processing. Helps with padding, identifying predicted regions, adding noise, and mapping predictions.
