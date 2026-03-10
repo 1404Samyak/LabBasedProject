@@ -156,17 +156,16 @@ This stabilizes the signal for neural network training.
 # Network.py
 This file defines the neural network architecture used to learn the mapping between EEG signals (from sensors) and brain source activity (in brain regions). The network is divided into two main stages:
 1. Spatial Filtering → learns relationships between EEG sensors (76 eeg sensors)
-2. Temporal Filtering → learns patterns over time
+2. Temporal Filtering → learns patterns over time,like EEG signals are time based signals 
 
-The main model that combines both parts is called **TemporalInverseNet** (spatial filtering + temporal filtering).
-
+The main model that combines both parts is called **TemporalInverseNet** (spatial filtering + temporal filtering both combined).
 ### 1) MLPSpatialFilter (Spatial Processing)
 `class MLPSpatialFilter(nn.Module)`
 This class performs spatial filtering of EEG signals across sensors (76 sensors) using fully connected layers (MLP). It learns how sensors interact with each other.
 
 ##### i) Initialization
 `def __init__(self, num_sensor, num_hidden, activation):` Runs once when the model is created.
-- **Parameters**: num_sensor (76), num_hidden (500), activation (ReLU, Tanh etc.)
+- **Parameters**: num_sensor (76), num_hidden (500), activation function (ReLU, Tanh etc.)
 - **Layers**: fc11, fc12 (Linear num_sensor → num_sensor); fc21, fc22 (Linear num_sensor → num_hidden); fc23 (Linear num_sensor → num_hidden); value (Linear num_hidden → num_hidden).
 - **Activation**: Created dynamically using `nn.__dict__[activation]()`.
 
@@ -175,7 +174,55 @@ This class performs spatial filtering of EEG signals across sensors (76 sensors)
 - **Step 1**: First transformation with residual connection: `x = activation(fc12(activation(fc11(x))) + x)`. The `+ x` part is called a residual connection, which helps: better training, stable gradients.
 - **Step 2**: Hidden feature transformation: `x = activation(fc22(activation(fc21(x))) + fc23(x))`.
 - **Step 3**: Final spatial output: `out['value'] = value(x)`, `out['value_activation'] = activation(out['value'])`.
+Input EEG
+(B , 76)
+   │
+   ▼
+fc11  (76 → 76)
+   │
+activation
+   │
+   ▼
+fc12  (76 → 76)
+   │
+ + residual (original x)
+   │
+activation
+   │
+   ▼
+Spatial Features
+(B , 76)
+   │
+   ▼
+fc21  (76 → 500)
+   │
+activation
+   │
+   ▼
+fc22  (500 → 500)
+   │
+ + fc23(x)  (76 → 500)
+   │
+activation
+   │
+   ▼
+Hidden Representation
+(B , 500)
+   │
+   ▼
+value layer
+(500 → 500)
+   │
+   ├── out['value']
+   │       (B , 500)
+   │
+   └── activation
+           │
+           ▼
+     out['value_activation']
+           (B , 500)
 
+           
 ### 2) TemporalFilter (Temporal Processing)
 `class TemporalFilter(nn.Module)`
 This module learns temporal patterns in EEG signals using LSTM (Recurrent Neural Network).
