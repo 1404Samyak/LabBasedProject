@@ -1,0 +1,12 @@
+- When we run the command with x regions, the script performs a separate simulation for each brain region being active once.So at a time when we generate .mat files of one region we keep that region only active and other regions at baseline activity
+
+- So it creates folders like a0, a1, a2, …, a(x−1), where each folder corresponds to a simulation where only that specific brain region is made highly active while all other regions remain at baseline activity.
+
+- Inside each folder there are 60 .mat files, so overall the dataset contains x × 60 simulation files. Each .mat file represents 10 seconds of simulated brain source activity generated using the Jansen–Rit neural mass model. 
+- The reason there are 60 files per region comes from two loops in the code. 
+    i) First, the simulation is run for 3 different parameter settings (called iterations) that slightly change the neural model parameters and noise levels. This is done so that the signals do not all look identical and instead capture biological variability similar to real brain signals. 
+    ii) Second, for each of those parameter settings the simulation is divided into 20 separate time segments, each producing one .mat file containing a different 10-second sample of brain activity. Therefore, 3 parameter variations × 20 time segments = 60 files per region. 
+
+- Each file contains the time vector, the simulated neural activity of all brain regions, and the excitability values indicating which region was active. In simple terms, these files together form a large dataset of many possible brain activity patterns where different regions act as the source, which can later be used to train the DeepSIF model to learn how brain sources produce measurable signals.
+
+- In one iteration (iter_m), the neural model parameters (like mean input and noise level) are fixed. Using this fixed parameter setting, the simulator is run 20 times. Each run generates one time segment of 10 seconds of brain activity. These segments are different from each other because the simulator uses stochastic noise, so even with the same parameters the neural activity evolves differently each time. Therefore, in one iteration we obtain 20 different 10-second samples of brain activity.
