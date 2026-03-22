@@ -200,7 +200,6 @@ This class performs spatial filtering of EEG signals across sensors (76 sensors)
 but we feed only the activated/non linear features to the LSTM layer or the temporal filter 
 
 
-
 ### 2) TemporalFilter (Temporal Processing)
 `class TemporalFilter(nn.Module)`
 - So for the LSTM across each time step it receives B,500 so for 500 time points if we stack all we get a seq of shape B,500,500 which is fed as input to the LSTM layers
